@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio de Servicios Locales</title>
+    <!-- Tailwind CSS v4 para estilos utilitarios -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+
+    <!-- ==========================================
+         NAVBAR MEJORADO
+         ==========================================
+         - Ahora usa flex-wrap para evitar que los botones se salgan en móviles pequeños
+         - Los botones se apilan verticalmente en pantallas muy pequeñas
+         - Agregué z-50 para que el navbar siempre esté por encima de otros elementos -->
+   <nav class="bg-gray-900 border-b border-gray-800 py-4 px-4 sm:px-6 flex flex-wrap justify-between items-center sticky top-0 z-50">
+    <h1 class="text-xl font-bold text-blue-400">ServiLocal</h1>
+    <div class="flex gap-2 mt-2 sm:mt-0">
+        <button onclick="openLogin()" class="text-gray-300 font-medium hover:text-white px-3 py-2 transition">Ingresar</button>
+       <button onclick="openRegister()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">Registrarse</button>
+    </div>
+</nav>
+    <!-- ==========================================
+         HEADER / HERO SECTION MEJORADO
+         ==========================================
+         - Reduje el padding vertical (my-16 → my-8 en móvil, my-16 en desktop) para no desperdiciar espacio en celular
+         - El título cambia de tamaño: text-3xl en móvil, text-4xl en desktop
+         - El buscador ahora es una columna en móvil y fila en desktop (flex-col md:flex-row)
+         - Agregué iconos de búsqueda dentro de los inputs para mejor UX -->
+    <header class="max-w-4xl mx-auto text-center my-8 md:my-16 px-4">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight">
+        Encuentra técnicos confiables en tu zona
+    </h2>
+    <p class="text-gray-400 text-base md:text-lg mb-8 px-2">
+        Carpinteros, fontaneros y soldadores listos para ayudarte hoy mismo.
+    </p>
+
+    <div class="bg-gray-900 p-4 rounded-xl shadow-lg border border-gray-800 flex flex-col md:flex-row gap-3 md:gap-4 items-center">
+        <div class="w-full relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+            <input type="text" placeholder="¿Qué servicio buscas? (ej. Carpintero)" 
+                   class="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 transition">
+        </div>
+        <div class="w-full relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">📍</span>
+            <select class="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 transition appearance-none cursor-pointer">
+                <option value="" disabled selected class="text-gray-500">¿En qué país?</option>
+                <option value="ar">🇦🇷 Argentina</option>
+                <option value="bo">🇧🇴 Bolivia</option>
+                <option value="br">🇧🇷 Brasil</option>
+                <option value="cl">🇨🇱 Chile</option>
+                <option value="co">🇨🇴 Colombia</option>
+                <option value="cr">🇨🇷 Costa Rica</option>
+                <option value="cu">🇨🇺 Cuba</option>
+                <option value="ec">🇪🇨 Ecuador</option>
+                <option value="sv">🇸🇻 El Salvador</option>
+                <option value="gt">🇬🇹 Guatemala</option>
+                <option value="hn">🇭🇳 Honduras</option>
+                <option value="mx">🇲🇽 México</option>
+                <option value="ni">🇳🇮 Nicaragua</option>
+                <option value="pa">🇵🇦 Panamá</option>
+                <option value="py">🇵🇾 Paraguay</option>
+                <option value="pe">🇵🇪 Perú</option>
+                <option value="do">🇩🇴 República Dominicana</option>
+                <option value="uy">🇺🇾 Uruguay</option>
+                <option value="ve">🇻🇪 Venezuela</option>
+            </select>
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">▼</span>
+        </div>
+        <button class="w-full md:w-auto bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition shadow-lg">
+            Buscar
+        </button>
+    </div>
+</header>
+
+    <!-- ==========================================
+         SECCIÓN DE CATEGORÍAS MEJORADA
+         ==========================================
+         - Cambié de grid-cols-2 a grid-cols-1 en móvil muy pequeño, 2 en sm, 3 en md, y 4 en lg
+         - Esto permite mostrar las 8 categorías sin que se vean apretadas
+         - Agregué 4 nuevas categorías: Limpieza, Lavado de Autos, Pintura y Electricidad
+         - Cada tarjeta tiene hover más pronunciado y active state para feedback táctil -->
+  <main class="max-w-5xl mx-auto px-4 pb-16">
+    <h3 class="text-xl md:text-2xl font-bold text-white mb-6 px-2">Nuestros Servicios</h3>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🪚</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Carpintería</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">👨‍🏭</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Soldadura</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🧱</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Albañilería</h4>
+        </div>
+
+          <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">👷‍♂️</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Ingenieria</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🔧</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Fontanería</h4>
+        </div>
+          <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🧑‍🔧🚗</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Mecanico</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🧹</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Limpieza de Casa</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🚗</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Lavado de Autos</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">🎨</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Pintura de Casa</h4>
+        </div>
+
+        <div class="bg-gray-900 p-5 md:p-6 rounded-xl border border-gray-800 text-center shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-gray-700 cursor-pointer transition-all duration-200 active:scale-95">
+            <div class="text-3xl md:text-4xl mb-3">⚡</div>
+            <h4 class="font-bold text-gray-100 text-sm md:text-base">Electricistas</h4>
+        </div>
+
+    </div>
+</main>
+    <!-- ==========================================
+         MODAL DE LOGIN (NUEVO)
+         ==========================================
+         - Ventana emergente centrada con fondo oscuro semitransparente
+         - Se cierra al hacer clic fuera del modal o en la X
+         - Diseño responsive: padding reducido en móvil, ancho máximo en desktop
+         - Incluye campos de email, contraseña, checkbox "Recordarme" y enlace "Olvidé contraseña" -->
+   <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 relative transform scale-95 transition-transform duration-200 border border-gray-800" id="loginContent">
+        <button onclick="closeLogin()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl leading-none transition">&times;</button>
+        
+        <h3 class="text-2xl font-bold text-white mb-2">Bienvenido de vuelta</h3>
+        <p class="text-gray-400 mb-6 text-sm">Ingresa a tu cuenta para continuar</p>
+        
+        <form onsubmit="event.preventDefault();" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Correo electrónico</label>
+                <input type="email" placeholder="tu@email.com" 
+                       class="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 transition">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
+                <input type="password" placeholder="••••••••" 
+                       class="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 transition">
+            </div>
+            
+            <div class="flex items-center justify-between text-sm">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 bg-gray-800 border-gray-600 rounded text-blue-600 focus:ring-blue-500">
+                    <span class="text-gray-400">Recordarme</span>
+                </label>
+                <a href="#" class="text-blue-400 hover:text-blue-300 font-medium transition">¿Olvidaste tu contraseña?</a>
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition shadow-lg">
+                Iniciar Sesión
+            </button>
+        </form>
+        
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-800"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-gray-900 text-gray-500">¿No tienes cuenta?</span>
+            </div>
+        </div>
+        <!--este es el boton que esta dentro de el modal de login, que abre el modal de registro -->
+        <button class="w-full border border-gray-700 text-gray-300 py-3 rounded-lg font-semibold hover:bg-gray-800 hover:text-white transition">
+            Crear cuenta nueva
+        </button>
+        
+    </div>
+</div>
+<!-- ==================== MODAL DE REGISTRO (COMPACTO) ==================== -->
+<div id="registerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] flex flex-col border border-gray-800 transform scale-95 transition-transform duration-300" id="registerContent">
+        
+        <!-- Header fijo -->
+        <div class="p-5 pb-3 border-b border-gray-800 shrink-0">
+            <button onclick="closeRegister()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-xl leading-none transition">&times;</button>
+            <h3 class="text-xl font-bold text-white">Crear cuenta</h3>
+            <p class="text-gray-400 text-xs mt-1">Únete a ServiLocal</p>
+        </div>
+        
+        <!-- Body con scroll -->
+        <div class="overflow-y-auto p-5 pt-3 space-y-3 custom-scrollbar">
+            <form id="registerForm" onsubmit="event.preventDefault();" class="space-y-3">
+                
+                <!-- Nombre -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Nombre completo</label>
+                    <input type="text" name="nombre" required placeholder="Ej: Juan Pérez"
+                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Correo electrónico</label>
+                    <input type="email" name="email" required placeholder="tu@email.com"
+                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                
+                <!-- Contraseña -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
+                    <input type="password" name="password" required minlength="6" placeholder="Mínimo 6 caracteres"
+                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                
+                <!-- Confirmar -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Confirmar contraseña</label>
+                    <input type="password" name="confirmPassword" required minlength="6" placeholder="Repite tu contraseña"
+                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                
+                <!-- Teléfono -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Teléfono <span class="text-gray-500 font-normal">(opcional)</span></label>
+                    <input type="tel" name="telefono" placeholder="+56 9 1234 5678"
+                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                
+                <!-- País -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">País</label>
+                    <div class="relative">
+                        <select name="pais" required
+                                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm appearance-none cursor-pointer transition">
+                            <option value="" disabled selected>Selecciona tu país</option>
+                            <option value="ar">🇦🇷 Argentina</option>
+                            <option value="bo">🇧🇴 Bolivia</option>
+                            <option value="br">🇧🇷 Brasil</option>
+                            <option value="cl">🇨🇱 Chile</option>
+                            <option value="co">🇨🇴 Colombia</option>
+                            <option value="cr">🇨🇷 Costa Rica</option>
+                            <option value="cu">🇨🇺 Cuba</option>
+                            <option value="ec">🇪🇨 Ecuador</option>
+                            <option value="sv">🇸🇻 El Salvador</option>
+                            <option value="gt">🇬🇹 Guatemala</option>
+                            <option value="hn">🇭🇳 Honduras</option>
+                            <option value="mx">🇲🇽 México</option>
+                            <option value="ni">🇳🇮 Nicaragua</option>
+                            <option value="pa">🇵🇦 Panamá</option>
+                            <option value="py">🇵🇾 Paraguay</option>
+                            <option value="pe">🇵🇪 Perú</option>
+                            <option value="do">🇩🇴 República Dominicana</option>
+                            <option value="uy">🇺🇾 Uruguay</option>
+                            <option value="ve">🇻🇪 Venezuela</option>
+                        </select>
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs">▼</span>
+                    </div>
+                </div>
+                
+                <!-- Tipo de usuario -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-2">¿Cómo quieres usar ServiLocal?</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="tipo" value="cliente" checked class="peer sr-only">
+                            <div class="text-center p-2 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 peer-checked:border-blue-500 peer-checked:bg-blue-900/30 peer-checked:text-blue-400 transition">
+                                <div class="text-xl mb-0.5">🔍</div>
+                                <span class="text-xs font-medium">Buscar</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="tipo" value="proveedor" class="peer sr-only">
+                            <div class="text-center p-2 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 peer-checked:border-blue-500 peer-checked:bg-blue-900/30 peer-checked:text-blue-400 transition">
+                                <div class="text-xl mb-0.5">🛠️</div>
+                                <span class="text-xs font-medium">Ofrecer</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Términos -->
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" name="terminos" required class="mt-0.5 w-3.5 h-3.5 bg-gray-800 border-gray-600 rounded text-blue-600 focus:ring-blue-500">
+                    <span class="text-gray-400 text-xs">Acepto los <a href="#" class="text-blue-400 hover:text-blue-300">términos</a> y <a href="#" class="text-blue-400 hover:text-blue-300">privacidad</a></span>
+                </label>
+                
+                <!-- Botón -->
+             
+            </form>
+            
+            <!-- Separador -->
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-800"></div>
+                </div>
+                <div class="relative flex justify-center">
+                    <span class="px-2 bg-gray-900 text-gray-500 text-xs">¿Ya tienes cuenta?</span>
+                </div>
+            </div>
+            
+            <!-- Link a login -->
+            <button onclick="closeRegister(); openLogin();" class="w-full border border-gray-700 text-gray-300 py-2.5 rounded-lg font-semibold hover:bg-gray-800 hover:text-white transition text-sm mb-2">
+                Iniciar sesión
+            </button>
+        </div>
+    </div>
+</div>
+           
+        
+            
+        
+        </form>
+        
+        <!-- Separador -->
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-800"></div>
+            </div>
+          
+        </div>
+        
+        <!-- Link a login -->
+        
+    </div>
+</div>
+
+
+
+    <!-- ==========================================
+         SCRIPTS PARA FUNCIONALIDAD DEL LOGIN
+         ========================================== -->
+
+
+
+         
+    <script>
+        const modal = document.getElementById('loginModal');
+        const modalContent = document.getElementById('loginContent');
+
+        // Abrir modal: quita 'hidden', fuerza reflow y añade clases de animación
+        function openLogin() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Pequeño timeout para que la transición CSS funcione
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+        // ==================== FUNCIONES MODAL REGISTRO ====================
+
+function openRegister() {
+    const modal = document.getElementById('registerModal');
+    const content = document.getElementById('registerContent');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+    }, 10);
+}
+
+function closeRegister() {
+    const modal = document.getElementById('registerModal');
+    const content = document.getElementById('registerContent');
+    modal.classList.add('opacity-0');
+    content.classList.remove('scale-100');
+    content.classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 300);
+}
+
+// Cerrar al hacer clic fuera
+document.getElementById('registerModal').addEventListener('click', function(e) {
+    if (e.target === this) closeRegister();
+});
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('registerModal');
+        if (!modal.classList.contains('hidden')) closeRegister();
+    }
+});
+
+        // Cerrar modal: añade clases de salida y luego oculta
+        function closeLogin() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        // Cerrar al hacer clic fuera del contenido del modal
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeLogin();
+            }
+        });
+
+        // Cerrar con la tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeLogin();
+            }
+        });
+    </script>
+
+</body>
+</html>
