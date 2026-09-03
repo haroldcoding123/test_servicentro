@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - ServiLocal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    </style>
+</head>
+<body class="bg-gray-950 font-sans text-gray-100">
+
+    <!-- ==================== NAVBAR ==================== -->
+    <nav class="bg-gray-900 border-b border-gray-800 py-3 px-4 sm:px-6 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-blue-400">ServiLocal</h1>
+        <div class="flex gap-2 items-center">
+            <span class="text-gray-300 text-sm mr-2">👤 Mi Perfil</span>
+            <div class="relative group">
+                <button class="bg-gray-800 text-gray-300 px-3 py-2 rounded-lg text-sm hover:bg-gray-700 transition">Editar ▼</button>
+                <div class="absolute right-0 mt-2 w-56 bg-gray-900 border border-gray-800 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <button onclick="openEditPhoto()" class="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 hover:text-white first:rounded-t-lg transition flex items-center gap-2">📷 Cambiar foto de perfil</button>
+                    <button onclick="openEditDesc()" class="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition flex items-center gap-2">📝 Editar descripción</button>
+                    <button onclick="openEditInfo()" class="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition flex items-center gap-2">📋 Editar información</button>
+                    <button onclick="openAddWork()" class="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 hover:text-white last:rounded-b-lg transition flex items-center gap-2">📸 Agregar fotos de trabajo</button>
+                </div>
+            </div>
+            <button onclick="logoutUser()" class="bg-red-600/20 text-red-400 px-3 py-2 rounded-lg text-sm hover:bg-red-600/30 transition">Salir</button>
+        </div>
+    </nav>
+
+    <!-- ==================== PORTADA ==================== -->
+    <div class="relative w-full h-48 md:h-64 bg-gradient-to-r from-blue-900 via-gray-900 to-blue-950 overflow-hidden">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%231e3a5f\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+    </div>
+
+    <!-- ==================== INFO PRINCIPAL ==================== -->
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="relative -mt-16 mb-4 flex flex-col md:flex-row items-end md:items-end gap-4">
+            
+            <!-- FOTO DE PERFIL -->
+            <div class="relative">
+                <div id="profilePhotoContainer" class="w-32 h-32 rounded-full border-4 border-gray-950 bg-gray-800 overflow-hidden flex items-center justify-center shadow-xl">
+                    <span id="profilePhotoEmoji" class="text-5xl">👨‍🔧</span>
+                    <img id="profilePhotoImg" src="" class="w-full h-full object-cover hidden">
+                </div>
+                <button onclick="openEditPhoto()" class="absolute bottom-1 right-1 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full border border-gray-700 transition shadow-lg">
+                    📷
+                </button>
+            </div>
+
+            <!-- NOMBRE Y DATOS -->
+            <div class="flex-1 mb-2">
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Carlos Rodríguez</h1>
+                <p class="text-gray-400 text-sm">🔧 Fontanero profesional • 📍 Santiago, Chile</p>
+                <div class="flex gap-2 mt-2">
+                    <span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs font-medium">⭐ 4.8 (127 reseñas)</span>
+                    <span class="bg-green-600/20 text-green-400 px-2 py-0.5 rounded text-xs font-medium">✅ Verificado</span>
+                </div>
+            </div>
+
+            <!-- BOTONES ACCIÓN -->
+            <div class="flex gap-2 mb-2">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition">Contactar</button>
+               <button onclick="openShare()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg font-medium text-sm transition">Compartir</button>
+            </div>
+        </div>
+
+        <!-- ==================== LAYOUT 3 COLUMNAS (MD) / 1 COLUMNA (MÓVIL) ==================== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pb-8">
+
+            <!-- ==================== COLUMNA IZQUIERDA: INFO ==================== -->
+            <div class="space-y-4">
+                
+                <!-- Descripción -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-100 text-sm uppercase tracking-wide">Sobre mí</h3>
+                        <button onclick="openEditDesc()" class="text-blue-400 text-xs hover:text-blue-300 transition">Editar</button>
+                    </div>
+                    <p id="profileDescription" class="text-gray-400 text-sm leading-relaxed">
+                        Fontanero con más de 15 años de experiencia. Especializado en instalaciones residenciales, reparaciones de emergencia 24/7 y remodelaciones de baños. Trabajo garantizado y presupuesto sin compromiso.
+                    </p>
+                </div>
+
+                <!-- Especialidades / Etiquetas -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                    <h3 class="font-bold text-gray-100 mb-3 text-sm uppercase tracking-wide">Especialidades</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-gray-800 text-gray-300 px-3 py-1.5 rounded-full text-xs border border-gray-700 hover:border-blue-500 hover:text-blue-400 transition cursor-default">🔧 Instalaciones</span>
+                        <span class="bg-gray-800 text-gray-300 px-3 py-1.5 rounded-full text-xs border border-gray-700 hover:border-blue-500 hover:text-blue-400 transition cursor-default">🚿 Reparaciones</span>
+                        <span class="bg-gray-800 text-gray-300 px-3 py-1.5 rounded-full text-xs border border-gray-700 hover:border-blue-500 hover:text-blue-400 transition cursor-default">🛁 Baños</span>
+                        <span class="bg-gray-800 text-gray-300 px-3 py-1.5 rounded-full text-xs border border-gray-700 hover:border-blue-500 hover:text-blue-400 transition cursor-default">🔥 Calefacción</span>
+                        <span class="bg-gray-800 text-gray-300 px-3 py-1.5 rounded-full text-xs border border-gray-700 hover:border-blue-500 hover:text-blue-400 transition cursor-default">🚨 Emergencias 24/7</span>
+                        <span class="bg-gray-800 text-gray-300 px-3 py-1.5 rounded-full text-xs border border-gray-700 hover:border-blue-500 hover:text-blue-400 transition cursor-default">💧 Fugas</span>
+                    </div>
+                </div>
+
+                <!-- Info de contacto -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-100 text-sm uppercase tracking-wide">Información</h3>
+                        <button onclick="openEditInfo()" class="text-blue-400 text-xs hover:text-blue-300 transition">Editar</button>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center gap-3 text-gray-400">
+                            <span class="text-gray-500">📍</span>
+                            <span id="displayCiudad">Santiago, Región Metropolitana</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-gray-400">
+                            <span class="text-gray-500">📞</span>
+                            <span id="displayTelefono">+56 9 1234 5678</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-gray-400">
+                            <span class="text-gray-500">✉️</span>
+                            <span id="displayEmail">carlos@email.com</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-gray-400">
+                            <span class="text-gray-500">🏠</span>
+                            <span id="displayDireccion">Av. Principal 123, Depto 4B</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-gray-400">
+                            <span class="text-gray-500">⏰</span>
+                            <span id="displayHorario">Lun - Sáb: 08:00 - 20:00</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-gray-400">
+                            <span class="text-gray-500">💵</span>
+                            <span id="displayPrecio">Desde $25.000 CLP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== COLUMNA CENTRO: TRABAJOS ==================== -->
+            <div class="md:col-span-2 space-y-4">
+                
+                <!-- Galería de trabajos -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-100 text-sm uppercase tracking-wide">Trabajos realizados</h3>
+                        <button onclick="openAddWork()" class="text-blue-400 text-sm hover:text-blue-300 transition">+ Agregar fotos</button>
+                    </div>
+                    
+                    <!-- Grid de fotos -->
+                    <div id="worksGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <div class="aspect-square bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 transition cursor-pointer overflow-hidden relative group">
+                            <div class="absolute inset-0 flex items-center justify-center text-4xl">🚿</div>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span class="text-white text-xs font-medium">Instalación baño</span>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 transition cursor-pointer overflow-hidden relative group">
+                            <div class="absolute inset-0 flex items-center justify-center text-4xl">🔧</div>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span class="text-white text-xs font-medium">Reparación tubería</span>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 transition cursor-pointer overflow-hidden relative group">
+                            <div class="absolute inset-0 flex items-center justify-center text-4xl">🛁</div>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span class="text-white text-xs font-medium">Remodelación</span>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 transition cursor-pointer overflow-hidden relative group">
+                            <div class="absolute inset-0 flex items-center justify-center text-4xl">💧</div>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span class="text-white text-xs font-medium">Detección fuga</span>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 transition cursor-pointer overflow-hidden relative group">
+                            <div class="absolute inset-0 flex items-center justify-center text-4xl">🔥</div>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span class="text-white text-xs font-medium">Calefacción</span>
+                            </div>
+                        </div>
+                        <!-- Botón agregar más -->
+                        <div onclick="openAddWork()" class="aspect-square bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-700 hover:border-blue-500 transition cursor-pointer flex flex-col items-center justify-center text-gray-500 hover:text-blue-400">
+                            <span class="text-2xl mb-1">+</span>
+                            <span class="text-xs">Agregar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reseñas / Reviews -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-100 text-sm uppercase tracking-wide">Reseñas recientes</h3>
+                        <span class="text-gray-500 text-xs">127 total</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-800">
+                            <div class="flex justify-between items-start mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm">👤</div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-200">María González</p>
+                                        <p class="text-xs text-gray-500">Hace 2 días</p>
+                                    </div>
+                                </div>
+                                <span class="text-yellow-400 text-sm">⭐⭐⭐⭐⭐</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mt-1">Excelente trabajo, llegó puntual y dejó todo impecable. Super recomendado para instalaciones de baño.</p>
+                        </div>
+
+                        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-800">
+                            <div class="flex justify-between items-start mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm">👤</div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-200">Pedro Soto</p>
+                                        <p class="text-xs text-gray-500">Hace 1 semana</p>
+                                    </div>
+                                </div>
+                                <span class="text-yellow-400 text-sm">⭐⭐⭐⭐⭐</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mt-1">Tuve una emergencia con una fuga a las 11 PM y Carlos vino enseguida. Muy profesional.</p>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full mt-3 py-2 text-gray-400 text-sm hover:text-white transition border border-gray-800 rounded-lg hover:bg-gray-800">
+                        Ver todas las reseñas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+        // ==================== MODAL DESCRIPCIÓN ====================
+        function openEditDesc() {
+            const modal = document.getElementById('editDescModal');
+            const content = document.getElementById('editDescContent');
+            const currentDesc = document.getElementById('profileDescription').textContent.trim();
+            document.getElementById('descInput').value = currentDesc;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
+        
+        function closeEditDesc() {
+            const modal = document.getElementById('editDescModal');
+            const content = document.getElementById('editDescContent');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        }
+        
+        function saveDescription() {
+            const newDesc = document.getElementById('descInput').value;
+            document.getElementById('profileDescription').textContent = newDesc;
+            closeEditDesc();
+        }
+
+        // ==================== MODAL FOTO PERFIL ====================
+        function openEditPhoto() {
+            const modal = document.getElementById('editPhotoModal');
+            const content = document.getElementById('editPhotoContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
+        
+        function closeEditPhoto() {
+            const modal = document.getElementById('editPhotoModal');
+            const content = document.getElementById('editPhotoContent');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        }
+        
+        function previewProfilePhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewPhoto').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function saveProfilePhoto() {
+            const preview = document.getElementById('previewPhoto').innerHTML;
+            if (preview.includes('img')) {
+                const container = document.getElementById('profilePhotoContainer');
+                const emoji = document.getElementById('profilePhotoEmoji');
+                const img = document.getElementById('profilePhotoImg');
+                
+                const src = preview.match(/src="([^"]+)"/)[1];
+                img.src = src;
+                img.classList.remove('hidden');
+                emoji.classList.add('hidden');
+            }
+            closeEditPhoto();
+        }
+
+        // ==================== MODAL EDITAR INFORMACIÓN ====================
+        function openEditInfo() {
+            const modal = document.getElementById('editInfoModal');
+            const content = document.getElementById('editInfoContent');
+            
+            document.getElementById('editTelefono').value = document.getElementById('displayTelefono').textContent.trim();
+            document.getElementById('editEmail').value = document.getElementById('displayEmail').textContent.trim();
+            document.getElementById('editDireccion').value = document.getElementById('displayDireccion').textContent.trim();
+            document.getElementById('editCiudad').value = document.getElementById('displayCiudad').textContent.trim();
+            document.getElementById('editHorario').value = document.getElementById('displayHorario').textContent.trim();
+            document.getElementById('editPrecio').value = document.getElementById('displayPrecio').textContent.trim();
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
+        
+        function closeEditInfo() {
+            const modal = document.getElementById('editInfoModal');
+            const content = document.getElementById('editInfoContent');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        }
+        
+        function saveInfo() {
+            document.getElementById('displayTelefono').textContent = document.getElementById('editTelefono').value;
+            document.getElementById('displayEmail').textContent = document.getElementById('editEmail').value;
+            document.getElementById('displayDireccion').textContent = document.getElementById('editDireccion').value;
+            document.getElementById('displayCiudad').textContent = document.getElementById('editCiudad').value;
+            document.getElementById('displayHorario').textContent = document.getElementById('editHorario').value;
+            document.getElementById('displayPrecio').textContent = document.getElementById('editPrecio').value;
+            closeEditInfo();
+        }
+
+        // ==================== MODAL FOTOS TRABAJO ====================
+        function openAddWork() {
+            const modal = document.getElementById('addWorkModal');
+            const content = document.getElementById('addWorkContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
+        
+        function closeAddWork() {
+            const modal = document.getElementById('addWorkModal');
+            const content = document.getElementById('addWorkContent');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        }
+        
+        function previewWorkPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('workPreview').innerHTML = `<img src="${e.target.result}" class="h-full w-full object-cover rounded-lg">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function saveWorkPhoto() {
+            const title = document.getElementById('workTitle').value || 'Trabajo';
+            const preview = document.getElementById('workPreview').innerHTML;
+            
+            if (preview.includes('img')) {
+                const grid = document.getElementById('worksGrid');
+                const addBtn = grid.lastElementChild;
+                
+                const newItem = document.createElement('div');
+                newItem.className = 'aspect-square bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 transition cursor-pointer overflow-hidden relative group';
+                
+                const src = preview.match(/src="([^"]+)"/)[1];
+                newItem.innerHTML = `
+                    <div class="absolute inset-0"><img src="${src}" class="w-full h-full object-cover"></div>
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white text-xs font-medium">${title}</span>
+                    </div>
+                `;
+                
+                grid.insertBefore(newItem, addBtn);
+            }
+            
+            document.getElementById('workTitle').value = '';
+            document.getElementById('workPreview').innerHTML = '<span class="text-3xl mb-2">📷</span><span class="text-sm">Seleccionar foto del trabajo</span>';
+            closeAddWork();
+        }
+
+        // ==================== CERRAR AL HACER CLIC FUERA ====================
+        ['editDescModal', 'editPhotoModal', 'addWorkModal', 'editInfoModal'].forEach(id => {
+            document.getElementById(id).addEventListener('click', function(e) {
+                if (e.target === this) {
+                    if (id === 'editDescModal') closeEditDesc();
+                    if (id === 'editPhotoModal') closeEditPhoto();
+                    if (id === 'editInfoModal') closeEditInfo();
+                    if (id === 'addWorkModal') closeAddWork();
+                }
+            });
+        });
+
+        // ==================== CERRAR CON ESC ====================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeEditDesc();
+                closeEditPhoto();
+                closeEditInfo();
+                closeAddWork();
+            }
+        });
+
+        function logoutUser() {
+            localStorage.removeItem('user_session');
+            location.href = 'index.html';
+        }
+
+
+                // ==================== MODAL COMPARTIR ====================
+        function openShare() {
+            const modal = document.getElementById('shareModal');
+            const content = document.getElementById('shareContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
+        
+        function closeShare() {
+            const modal = document.getElementById('shareModal');
+            const content = document.getElementById('shareContent');
+            modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+        }
+        
+        function copyLink() {
+            const link = document.getElementById('shareLink');
+            link.select();
+            navigator.clipboard.writeText(link.value).then(() => {
+                const btn = event.target;
+                const original = btn.textContent;
+                btn.textContent = '¡Copiado!';
+                btn.classList.add('text-green-400');
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.classList.remove('text-green-400');
+                }, 2000);
+            });
+        }
+        
+        function shareWhatsApp() {
+            const url = encodeURIComponent(document.getElementById('shareLink').value);
+            const text = encodeURIComponent('Mira este perfil en ServiLocal: ');
+            window.open(`https://wa.me/?text=${text}${url}`, '_blank');
+        }
+        
+        function shareFacebook() {
+            const url = encodeURIComponent(document.getElementById('shareLink').value);
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+        }
+        
+        function shareTwitter() {
+            const url = encodeURIComponent(document.getElementById('shareLink').value);
+            const text = encodeURIComponent('Recomiendo este profesional en ServiLocal 👇');
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+        }
+        
+        function shareInstagram() {
+            alert('Instagram no permite compartir links directamente. Copia el link y pégalo en tu historia o mensaje.');
+            copyLink();
+        }
+        
+        function shareTelegram() {
+            const url = encodeURIComponent(document.getElementById('shareLink').value);
+            const text = encodeURIComponent('Mira este perfil en ServiLocal: ');
+            window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+        }
+        
+        function shareEmail() {
+            const url = document.getElementById('shareLink').value;
+            const subject = encodeURIComponent('Recomiendo este profesional en ServiLocal');
+            const body = encodeURIComponent(`Hola,\n\nTe recomiendo este perfil que encontré en ServiLocal:\n\n${url}\n\nSaludos!`);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
+        
+        function shareSMS() {
+            const url = encodeURIComponent(document.getElementById('shareLink').value);
+            const text = encodeURIComponent('Mira este perfil: ');
+            window.open(`sms:?&body=${text}${url}`, '_blank');
+        }
+        
+        function shareNative() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Perfil de Carlos Rodríguez - ServiLocal',
+                    text: 'Mira este profesional en ServiLocal',
+                    url: document.getElementById('shareLink').value
+                }).catch(err => console.log('Error al compartir:', err));
+            } else {
+                alert('Tu navegador no soporta compartir nativo. Usa Copiar Link.');
+            }
+        }
+    </script>
+
+    <!-- ==================== MODALES ==================== -->
+    
+    <!-- Modal Editar Descripción -->
+    <div id="editDescModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-800 transform scale-95 transition-transform duration-300" id="editDescContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Editar descripción</h3>
+                <button onclick="closeEditDesc()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <textarea id="descInput" rows="5" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 resize-none text-sm" placeholder="Describe tu experiencia, servicios, horarios..."></textarea>
+            <div class="flex gap-3 mt-4">
+                <button onclick="closeEditDesc()" class="flex-1 py-2.5 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition text-sm">Cancelar</button>
+                <button onclick="saveDescription()" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Foto de Perfil -->
+    <div id="editPhotoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-800 transform scale-95 transition-transform duration-300" id="editPhotoContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Foto de perfil</h3>
+                <button onclick="closeEditPhoto()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <div class="flex flex-col items-center gap-4">
+                <div class="w-32 h-32 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center text-5xl overflow-hidden" id="previewPhoto">
+                    👨‍🔧
+                </div>
+                <label class="w-full cursor-pointer">
+                    <input type="file" id="profilePhotoInput" accept="image/*" class="hidden" onchange="previewProfilePhoto(this)">
+                    <div class="w-full py-3 border-2 border-dashed border-gray-700 rounded-lg text-center text-gray-400 hover:border-blue-500 hover:text-blue-400 transition">
+                        <span class="text-2xl block mb-1">📁</span>
+                        <span class="text-sm">Seleccionar foto</span>
+                    </div>
+                </label>
+            </div>
+            <div class="flex gap-3 mt-4">
+                <button onclick="closeEditPhoto()" class="flex-1 py-2.5 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition text-sm">Cancelar</button>
+                <button onclick="saveProfilePhoto()" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Información de Contacto -->
+    <div id="editInfoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-800 transform scale-95 transition-transform duration-300" id="editInfoContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Editar información</h3>
+                <button onclick="closeEditInfo()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <form id="editInfoForm" onsubmit="event.preventDefault();" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Teléfono</label>
+                    <input type="tel" id="editTelefono" placeholder="+56 9 1234 5678" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Correo electrónico</label>
+                    <input type="email" id="editEmail" placeholder="tu@email.com" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Dirección</label>
+                    <input type="text" id="editDireccion" placeholder="Av. Principal 123, Depto 4B" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Ciudad / Región</label>
+                    <input type="text" id="editCiudad" placeholder="Santiago, Región Metropolitana" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Horario de atención</label>
+                    <input type="text" id="editHorario" placeholder="Lun - Sáb: 08:00 - 20:00" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Precio desde</label>
+                    <input type="text" id="editPrecio" placeholder="$25.000 CLP" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm transition">
+                </div>
+                <div class="flex gap-3 mt-4 pt-2">
+                    <button onclick="closeEditInfo()" class="flex-1 py-2.5 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition text-sm">Cancelar</button>
+                    <button onclick="saveInfo()" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Fotos de Trabajo -->
+    <div id="addWorkModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-800 transform scale-95 transition-transform duration-300" id="addWorkContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Agregar trabajo</h3>
+                <button onclick="closeAddWork()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Título del trabajo</label>
+                    <input type="text" id="workTitle" placeholder="Ej: Instalación baño completo" class="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <label class="w-full cursor-pointer block">
+                    <input type="file" id="workPhotoInput" accept="image/*" class="hidden" onchange="previewWorkPhoto(this)">
+                    <div class="w-full h-40 border-2 border-dashed border-gray-700 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-400 transition" id="workPreview">
+                        <span class="text-3xl mb-2">📷</span>
+                        <span class="text-sm">Seleccionar foto del trabajo</span>
+                    </div>
+                </label>
+            </div>
+            <div class="flex gap-3 mt-4">
+                <button onclick="closeAddWork()" class="flex-1 py-2.5 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition text-sm">Cancelar</button>
+                <button onclick="saveWorkPhoto()" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Agregar</button>
+            </div>
+        </div>
+    </div>
+    <!-- ==================== MODAL COMPARTIR ==================== -->
+    <div id="shareModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-800 transform scale-95 transition-transform duration-300" id="shareContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Compartir perfil</h3>
+                <button onclick="closeShare()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            
+            <!-- Link del perfil -->
+            <div class="bg-gray-800 rounded-lg p-3 mb-4 flex items-center gap-2 border border-gray-700">
+                <input type="text" id="shareLink" value="https://servilocal.com/perfil/carlos-rodriguez" readonly 
+                       class="flex-1 bg-transparent text-gray-400 text-sm outline-none">
+                <button onclick="copyLink()" class="text-blue-400 hover:text-blue-300 text-sm font-medium whitespace-nowrap">Copiar</button>
+            </div>
+            
+            <!-- Redes sociales -->
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="shareWhatsApp()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-green-600/20 flex items-center justify-center text-2xl group-hover:bg-green-600/30 transition">📱</div>
+                    <span class="text-gray-400 text-xs">WhatsApp</span>
+                </button>
+                
+                <button onclick="shareFacebook()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center text-2xl group-hover:bg-blue-600/30 transition">📘</div>
+                    <span class="text-gray-400 text-xs">Facebook</span>
+                </button>
+                
+                <button onclick="shareTwitter()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-sky-500/20 flex items-center justify-center text-2xl group-hover:bg-sky-500/30 transition">🐦</div>
+                    <span class="text-gray-400 text-xs">Twitter</span>
+                </button>
+                
+                <button onclick="shareInstagram()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center text-2xl group-hover:bg-pink-600/30 transition">📸</div>
+                    <span class="text-gray-400 text-xs">Instagram</span>
+                </button>
+                
+                <button onclick="shareTelegram()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-sky-400/20 flex items-center justify-center text-2xl group-hover:bg-sky-400/30 transition">✈️</div>
+                    <span class="text-gray-400 text-xs">Telegram</span>
+                </button>
+                
+                <button onclick="shareEmail()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-gray-600/20 flex items-center justify-center text-2xl group-hover:bg-gray-600/30 transition">✉️</div>
+                    <span class="text-gray-400 text-xs">Email</span>
+                </button>
+                
+                <button onclick="shareSMS()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-yellow-600/20 flex items-center justify-center text-2xl group-hover:bg-yellow-600/30 transition">💬</div>
+                    <span class="text-gray-400 text-xs">SMS</span>
+                </button>
+                
+                <button onclick="shareNative()" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-800 transition group">
+                    <div class="w-12 h-12 rounded-full bg-purple-600/20 flex items-center justify-center text-2xl group-hover:bg-purple-600/30 transition">📲</div>
+                    <span class="text-gray-400 text-xs">Más</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
