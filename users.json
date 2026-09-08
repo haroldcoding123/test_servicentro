@@ -8,5 +8,25 @@
     "pais": "hn",
     "tipo": "cliente",
     "fechaRegistro": "2026-09-03T21:34:05.075Z"
+  },
+  {
+    "id": "user_1788817661230",
+    "nombre": "juan perez",
+    "email": "juan@correo.com",
+    "password": "Mundial123",
+    "telefono": "789456123",
+    "pais": "hn",
+    "tipo": "cliente",
+    "fechaRegistro": "2026-09-07T21:47:41.230Z"
+  },
+  {
+    "id": "user_1788837116570",
+    "nombre": "ramon Salon",
+    "email": "carpintero@mail.es",
+    "password": "Comayagua2026*",
+    "telefono": "12345678",
+    "pais": "cu",
+    "tipo": "proveedor",
+    "fechaRegistro": "2026-09-08T03:11:56.570Z"
   }
 ]
