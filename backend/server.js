@@ -9,6 +9,8 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
+const { OFICIOS, normalizarTexto } = require('./utils/serviciosSinonimos');
+
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 
@@ -214,6 +216,35 @@ function requireAuth(req, res, next) {
     }
 }
 
+function skillMatchesQuery(skillValue, query) {
+    if (!skillValue || !query) return false;
+
+    const skillText = normalizarTexto(skillValue);
+    const searchText = normalizarTexto(query);
+
+    if (!skillText || !searchText) return false;
+    if (skillText.includes(searchText) || searchText.includes(skillText)) return true;
+
+    const aliasList = Object.values(OFICIOS).flat();
+    return aliasList.some(alias => {
+        const aliasText = normalizarTexto(alias);
+        return aliasText && (aliasText.includes(searchText) || searchText.includes(aliasText) || aliasText === skillText);
+    });
+}
+
+function tecnicoCoincideConBusqueda(tecnico, query) {
+    const normalizedQuery = normalizarTexto(query);
+    if (!normalizedQuery) return true;
+
+    const habilidades = Array.isArray(tecnico.habilidades) ? tecnico.habilidades : [];
+    const matchesSkill = habilidades.some(skill => skillMatchesQuery(skill, normalizedQuery));
+    const hayDescripcion = normalizarTexto(tecnico.descripcion || '').includes(normalizedQuery);
+    const hayNombre = normalizarTexto(tecnico.nombre || '').includes(normalizedQuery);
+    const hayPais = normalizarTexto(tecnico.pais || '').includes(normalizedQuery);
+
+    return matchesSkill || hayDescripcion || hayNombre || hayPais;
+}
+
 // ---------- MULTER CONFIG ----------
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -235,71 +266,79 @@ app.post('/api/register', async (req, res) => {
         nombre,
         email,
         password,
+        confirmPassword,
         telefono,
         pais,
         tipo,
         role,
+        habilidades,
         fechaRegistro,
         id
     } = req.body;
 
-    if (!nombre || !email || !password || !pais) {
+    if (!nombre || !email || !password || !telefono || !pais) {
         return res.status(400).json({ message: 'Faltan campos obligatorios' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+        return res.status(400).json({ message: 'El correo electrónico no tiene un formato válido.' });
+    }
+
+    if (String(password).length < 6) {
+        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    if (confirmPassword !== undefined && String(password) !== String(confirmPassword)) {
+        return res.status(400).json({ message: 'Las contraseñas no coinciden.' });
     }
 
     const normalizedRole = normalizeRole(role || tipo || 'cliente');
     const users = getUsers();
-    const normalizedEmail = String(email).trim().toLowerCase();
 
     if (users.some(u => String(u.email || '').trim().toLowerCase() === normalizedEmail)) {
         return res.status(409).json({ message: 'El correo ya está registrado' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(String(password), 10);
     const now = new Date().toISOString();
     const userId = id || `user_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
     const newUser = {
         id: userId,
-        nombre,
+        nombre: String(nombre).trim(),
         email: normalizedEmail,
         passwordHash,
-        telefono: telefono || '',
-        pais,
+        telefono: String(telefono).trim(),
+        pais: String(pais).trim(),
         role: normalizedRole,
         tipo: normalizedRole,
-        status: 'pendiente_verificacion',
-        emailVerifiedAt: null,
+        status: 'activo',
+        emailVerifiedAt: now,
         createdAt: fechaRegistro || now,
         updatedAt: now,
-        descripcion: req.body.descripcion || '',
-        direccion: req.body.direccion || '',
-        horario: req.body.horario || '',
-        precio: req.body.precio || '',
+        descripcion: String(req.body.descripcion || '').trim(),
+        direccion: String(req.body.direccion || '').trim(),
+        horario: String(req.body.horario || '').trim(),
+        precio: String(req.body.precio || '').trim(),
         foto: '',
         trabajos: [],
         favoritos: [],
+        habilidades: Array.isArray(habilidades) ? habilidades.map(h => String(h).trim()).filter(Boolean) : [],
         verification: null
     };
 
     users.push(newUser);
     saveUsers(users);
 
-    const verification = await issueVerificationCode(userId);
+    const token = createJwt(newUser);
+    const safeUser = buildSafeUser(newUser);
 
     res.status(201).json({
         ok: true,
-        message: 'Registro recibido. Revisa tu correo para verificar tu cuenta.',
-        requiresVerification: true,
-        user: {
-            id: userId,
-            nombre,
-            email: normalizedEmail,
-            role: normalizedRole,
-            tipo: normalizedRole,
-            status: 'pendiente_verificacion'
-        },
-        devCode: verification?.devCode || undefined
+        message: 'Registro exitoso. Tu cuenta quedó activa.',
+        token,
+        user: safeUser
     });
 });
 
@@ -403,7 +442,8 @@ app.post('/api/login', async (req, res) => {
             pais: result.user.pais,
             telefono: result.user.telefono,
             foto: result.user.foto,
-            status: result.user.status
+            status: result.user.status,
+            habilidades: Array.isArray(result.user.habilidades) ? result.user.habilidades : []
         }
     });
 });
@@ -427,9 +467,15 @@ app.put('/api/profile/:id', (req, res) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.id === req.params.id);
     if (idx === -1) return res.status(404).json({ message: 'Usuario no encontrado' });
-    const allowed = ['nombre', 'email', 'telefono', 'pais', 'descripcion', 'direccion', 'horario', 'precio'];
+    const allowed = ['nombre', 'email', 'telefono', 'pais', 'descripcion', 'direccion', 'horario', 'precio', 'habilidades'];
     allowed.forEach(key => {
-        if (req.body[key] !== undefined) users[idx][key] = req.body[key];
+        if (req.body[key] !== undefined) {
+            if (key === 'habilidades') {
+                users[idx][key] = Array.isArray(req.body[key]) ? req.body[key].map(h => String(h).trim()).filter(Boolean) : [];
+            } else {
+                users[idx][key] = req.body[key];
+            }
+        }
     });
     users[idx].updatedAt = new Date().toISOString();
     saveUsers(users);
@@ -454,22 +500,26 @@ app.post('/api/profile/:id/photo', upload.single('foto'), (req, res) => {
 });
 
 // ---------- TRABAJOS (fotos de trabajos del técnico) ----------
-app.post('/api/profile/:id/trabajos', upload.single('foto'), (req, res) => {
+app.post('/api/profile/:id/trabajos', upload.array('fotos', 10), (req, res) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.id === req.params.id);
     if (idx === -1) return res.status(404).json({ message: 'Usuario no encontrado' });
-    if (!req.file) return res.status(400).json({ message: 'No se subió ninguna foto' });
-    const trabajo = {
-        workId: 'work_' + Date.now(),
+
+    const uploadedFiles = Array.isArray(req.files) && req.files.length ? req.files : (req.file ? [req.file] : []);
+    if (!uploadedFiles.length) return res.status(400).json({ message: 'No se subió ninguna foto' });
+
+    const nuevosTrabajos = uploadedFiles.map((file) => ({
+        workId: 'work_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8),
         titulo: req.body.titulo || 'Trabajo',
         descripcion: req.body.descripcion || '',
-        foto: '/uploads/' + req.params.id + '/' + req.file.filename,
+        foto: '/uploads/' + req.params.id + '/' + file.filename,
         fecha: new Date().toISOString()
-    };
-    users[idx].trabajos.push(trabajo);
+    }));
+
+    users[idx].trabajos = Array.isArray(users[idx].trabajos) ? [...users[idx].trabajos, ...nuevosTrabajos] : nuevosTrabajos;
     users[idx].updatedAt = new Date().toISOString();
     saveUsers(users);
-    res.json({ message: 'Trabajo agregado', trabajo });
+    res.json({ message: 'Trabajo(s) agregado(s)', trabajos: nuevosTrabajos });
 });
 
 app.delete('/api/profile/:id/trabajos/:workId', (req, res) => {
@@ -521,16 +571,13 @@ app.get('/api/tecnicos/publicos', (req, res) => {
         result = result.filter(u => {
             const desc = (u.descripcion || '').toLowerCase();
             const nombre = (u.nombre || '').toLowerCase();
-            return desc.includes(categoria.toLowerCase()) || nombre.includes(categoria.toLowerCase());
+            const habilidades = Array.isArray(u.habilidades) ? u.habilidades.join(' ').toLowerCase() : '';
+            return desc.includes(categoria.toLowerCase()) || nombre.includes(categoria.toLowerCase()) || habilidades.includes(categoria.toLowerCase());
         });
     }
     if (q) {
-        const query = q.toLowerCase();
-        result = result.filter(u =>
-            (u.nombre || '').toLowerCase().includes(query) ||
-            (u.descripcion || '').toLowerCase().includes(query) ||
-            (u.direccion || '').toLowerCase().includes(query)
-        );
+        const query = String(q).trim();
+        result = result.filter(u => tecnicoCoincideConBusqueda(u, query));
     }
     const safe = result.map(u => ({
         id: u.id,
@@ -544,9 +591,40 @@ app.get('/api/tecnicos/publicos', (req, res) => {
         precio: u.precio,
         foto: u.foto,
         trabajos: u.trabajos,
+        habilidades: Array.isArray(u.habilidades) ? u.habilidades : [],
         fechaRegistro: u.createdAt || u.fechaRegistro
     }));
     res.json(safe);
+});
+
+app.get('/api/tecnicos/buscar', (req, res) => {
+    const query = String(req.query.query || '').trim();
+    const pais = String(req.query.pais || '').trim();
+
+    const users = getUsers().filter(u => normalizeRole(u.role || u.tipo) === 'tecnico' && (u.status || 'activo') === 'activo');
+
+    let result = users.filter(u => !query || tecnicoCoincideConBusqueda(u, query));
+    if (pais) {
+        result = result.filter(u => (u.pais || '').toLowerCase() === pais.toLowerCase());
+    }
+
+    const safe = result.map(u => ({
+        id: u.id,
+        nombre: u.nombre,
+        email: u.email,
+        telefono: u.telefono,
+        pais: u.pais,
+        descripcion: u.descripcion,
+        direccion: u.direccion,
+        horario: u.horario,
+        precio: u.precio,
+        foto: u.foto,
+        trabajos: u.trabajos,
+        habilidades: Array.isArray(u.habilidades) ? u.habilidades : [],
+        fechaRegistro: u.createdAt || u.fechaRegistro
+    }));
+
+    res.json({ ok: true, query, results: safe });
 });
 
 // ---------- ADMIN ENDPOINTS ----------
