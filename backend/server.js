@@ -8,11 +8,15 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const Database = require('better-sqlite3');
 
 const { OFICIOS, normalizarTexto } = require('./utils/serviciosSinonimos');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
+const SQLITE_PATH = path.join(__dirname, 'nexumservice.db');
+const LEGACY_JSON_PATH = path.join(__dirname, 'users.json');
+const db = new Database(SQLITE_PATH);
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -23,6 +27,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const DB_DIR = __dirname;
 const DB_FILE = path.join(DB_DIR, 'users.json');
 const ADMIN_FILE = path.join(DB_DIR, 'admin.json');
+const REQUESTS_FILE = path.join(DB_DIR, 'requests.json');
 const UPLOADS_DIR = path.join(DB_DIR, 'uploads');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -33,15 +38,191 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
 if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2));
 if (!fs.existsSync(ADMIN_FILE)) fs.writeFileSync(ADMIN_FILE, JSON.stringify({ user: 'admin', pass: 'admin123' }, null, 2));
+if (!fs.existsSync(REQUESTS_FILE)) fs.writeFileSync(REQUESTS_FILE, JSON.stringify([
+    { id: 'req_1001', cliente: 'Juan Pérez', tecnico: 'Luis Plomería Pro', estado: 'pendiente', fecha: '2026-09-14T10:00:00.000Z' },
+    { id: 'req_1002', cliente: 'Ana Flores', tecnico: 'Maria Elena', estado: 'cotizado', fecha: '2026-09-15T08:30:00.000Z' },
+    { id: 'req_1003', cliente: 'Carlos Ortiz', tecnico: 'David Zavala', estado: 'aceptado', fecha: '2026-09-16T12:45:00.000Z' },
+    { id: 'req_1004', cliente: 'Pablo Gómez', tecnico: 'Luis Plomería Pro', estado: 'en progreso', fecha: '2026-09-18T14:10:00.000Z' },
+    { id: 'req_1005', cliente: 'Sofia Torres', tecnico: 'René Carpintero', estado: 'completado', fecha: '2026-09-19T09:00:00.000Z' },
+    { id: 'req_1006', cliente: 'Marta Cruz', tecnico: 'Javier Electricista', estado: 'cancelado', fecha: '2026-09-20T16:20:00.000Z' }
+], null, 2));
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
+function parseJsonValue(value, fallback) {
+    if (value === undefined || value === null || value === '') return fallback;
+    if (typeof value === 'string') {
+        try { return JSON.parse(value); }
+        catch { return value; }
+    }
+    return value;
+}
+
+function ensureUsersTable() {
+    db.pragma('journal_mode = WAL');
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id TEXT PRIMARY KEY,
+            nombre TEXT,
+            email TEXT UNIQUE,
+            password TEXT,
+            passwordHash TEXT,
+            telefono TEXT,
+            pais TEXT,
+            role TEXT,
+            tipo TEXT,
+            status TEXT,
+            emailVerifiedAt TEXT,
+            createdAt TEXT,
+            updatedAt TEXT,
+            descripcion TEXT,
+            direccion TEXT,
+            horario TEXT,
+            precio TEXT,
+            foto TEXT,
+            trabajos TEXT,
+            favoritos TEXT,
+            habilidades TEXT,
+            verification TEXT,
+            lastActivityAt TEXT,
+            fechaRegistro TEXT
+        );
+    `);
+
+    const rowCount = db.prepare('SELECT COUNT(*) AS total FROM usuarios').get().total;
+    if (rowCount === 0) {
+        try {
+            const jsonUsers = JSON.parse(fs.readFileSync(DB_FILE, 'utf8') || '[]');
+            const insert = db.prepare(`
+                INSERT OR IGNORE INTO usuarios (
+                    id, nombre, email, password, passwordHash, telefono, pais, role, tipo, status,
+                    emailVerifiedAt, createdAt, updatedAt, descripcion, direccion, horario, precio,
+                    foto, trabajos, favoritos, habilidades, verification, lastActivityAt, fechaRegistro
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+
+            for (const user of jsonUsers) {
+                insert.run(
+                    user.id || null,
+                    user.nombre || '',
+                    (user.email || '').trim().toLowerCase(),
+                    user.password || null,
+                    user.passwordHash || null,
+                    user.telefono || '',
+                    user.pais || '',
+                    user.role || user.tipo || 'cliente',
+                    user.tipo || user.role || 'cliente',
+                    user.status || 'activo',
+                    user.emailVerifiedAt || null,
+                    user.createdAt || user.fechaRegistro || new Date().toISOString(),
+                    user.updatedAt || user.createdAt || user.fechaRegistro || new Date().toISOString(),
+                    user.descripcion || '',
+                    user.direccion || '',
+                    user.horario || '',
+                    user.precio || '',
+                    user.foto || '',
+                    JSON.stringify(Array.isArray(user.trabajos) ? user.trabajos : []),
+                    JSON.stringify(Array.isArray(user.favoritos) ? user.favoritos : []),
+                    JSON.stringify(Array.isArray(user.habilidades) ? user.habilidades : []),
+                    JSON.stringify(user.verification || null),
+                    user.lastActivityAt || user.updatedAt || user.createdAt || user.fechaRegistro || new Date().toISOString(),
+                    user.fechaRegistro || user.createdAt || new Date().toISOString()
+                );
+            }
+        } catch (error) {
+            console.warn('⚠️ No se pudo sincronizar usuarios desde users.json al iniciar SQLite:', error.message);
+        }
+    }
+}
+
+ensureUsersTable();
+
 function getUsers() {
-    try { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
-    catch { return []; }
+    const rows = db.prepare('SELECT * FROM usuarios ORDER BY createdAt DESC').all();
+    return rows.map((row) => ({
+        ...row,
+        password: row.password || null,
+        passwordHash: row.passwordHash || null,
+        trabajos: parseJsonValue(row.trabajos, []),
+        favoritos: parseJsonValue(row.favoritos, []),
+        habilidades: parseJsonValue(row.habilidades, []),
+        verification: parseJsonValue(row.verification, null),
+        role: row.role || row.tipo || 'cliente',
+        tipo: row.tipo || row.role || 'cliente'
+    }));
 }
 
 function saveUsers(users) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
+    const upsert = db.prepare(`
+        INSERT INTO usuarios (
+            id, nombre, email, password, passwordHash, telefono, pais, role, tipo, status,
+            emailVerifiedAt, createdAt, updatedAt, descripcion, direccion, horario, precio,
+            foto, trabajos, favoritos, habilidades, verification, lastActivityAt, fechaRegistro
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(email) DO UPDATE SET
+            id = excluded.id,
+            nombre = excluded.nombre,
+            email = excluded.email,
+            password = excluded.password,
+            passwordHash = excluded.passwordHash,
+            telefono = excluded.telefono,
+            pais = excluded.pais,
+            role = excluded.role,
+            tipo = excluded.tipo,
+            status = excluded.status,
+            emailVerifiedAt = excluded.emailVerifiedAt,
+            createdAt = excluded.createdAt,
+            updatedAt = excluded.updatedAt,
+            descripcion = excluded.descripcion,
+            direccion = excluded.direccion,
+            horario = excluded.horario,
+            precio = excluded.precio,
+            foto = excluded.foto,
+            trabajos = excluded.trabajos,
+            favoritos = excluded.favoritos,
+            habilidades = excluded.habilidades,
+            verification = excluded.verification,
+            lastActivityAt = excluded.lastActivityAt,
+            fechaRegistro = excluded.fechaRegistro
+    `);
+
+    for (const user of users) {
+        if (!user || !user.email) continue;
+        upsert.run(
+            user.id || null,
+            user.nombre || '',
+            (user.email || '').trim().toLowerCase(),
+            user.password || null,
+            user.passwordHash || null,
+            user.telefono || '',
+            user.pais || '',
+            user.role || user.tipo || 'cliente',
+            user.tipo || user.role || 'cliente',
+            user.status || 'activo',
+            user.emailVerifiedAt || null,
+            user.createdAt || user.fechaRegistro || new Date().toISOString(),
+            user.updatedAt || user.createdAt || user.fechaRegistro || new Date().toISOString(),
+            user.descripcion || '',
+            user.direccion || '',
+            user.horario || '',
+            user.precio || '',
+            user.foto || '',
+            JSON.stringify(Array.isArray(user.trabajos) ? user.trabajos : []),
+            JSON.stringify(Array.isArray(user.favoritos) ? user.favoritos : []),
+            JSON.stringify(Array.isArray(user.habilidades) ? user.habilidades : []),
+            JSON.stringify(user.verification || null),
+            user.lastActivityAt || user.updatedAt || user.createdAt || user.fechaRegistro || new Date().toISOString(),
+            user.fechaRegistro || user.createdAt || new Date().toISOString()
+        );
+    }
+}
+
+function getRequests() {
+    try { return JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8')); }
+    catch { return []; }
+}
+
+function saveRequests(requests) {
+    fs.writeFileSync(REQUESTS_FILE, JSON.stringify(requests, null, 2));
 }
 
 function getAdmin() {
@@ -55,8 +236,13 @@ function saveAdmin(data) {
 
 function normalizeRole(role) {
     const value = (role || '').toString().trim().toLowerCase();
+    if (value === 'admin' || value === 'superadmin' || value === 'super-admin') return 'admin';
     if (value === 'proveedor' || value === 'tecnico' || value === 'technician') return 'tecnico';
     return 'cliente';
+}
+
+function normalizeUserRole(user) {
+    return normalizeRole(user?.role || user?.tipo || 'cliente');
 }
 
 function buildSafeUser(user) {
@@ -65,7 +251,33 @@ function buildSafeUser(user) {
     delete safe.password;
     delete safe.passwordHash;
     delete safe.verification;
+    safe.role = normalizeUserRole(safe);
+    safe.tipo = safe.role;
+    safe.lastActivityAt = safe.lastActivityAt || safe.updatedAt || safe.createdAt || safe.fechaRegistro || new Date().toISOString();
     return safe;
+}
+
+function serializeUserForAdmin(user) {
+    if (!user) return null;
+    const safe = buildSafeUser(user);
+    const role = normalizeUserRole(user);
+    return {
+        ...safe,
+        id: safe.id || user.id,
+        nombre: safe.nombre || 'Sin nombre',
+        email: safe.email || '',
+        telefono: safe.telefono || '',
+        pais: safe.pais || 'No especificado',
+        role,
+        tipo: role,
+        status: safe.status || 'activo',
+        createdAt: safe.createdAt || safe.fechaRegistro || new Date().toISOString(),
+        updatedAt: safe.updatedAt || safe.createdAt || new Date().toISOString(),
+        lastActivityAt: safe.lastActivityAt || safe.updatedAt || safe.createdAt || new Date().toISOString(),
+        fechaRegistro: safe.createdAt || safe.fechaRegistro || new Date().toISOString(),
+        isAdmin: role === 'admin',
+        totalServicios: Array.isArray(safe.trabajos) ? safe.trabajos.length : 0
+    };
 }
 
 function generateCode() {
@@ -170,6 +382,33 @@ async function issueVerificationCode(userId) {
 async function loginUserByCredentials(email, password) {
     const users = getUsers();
     const normalizedEmail = (email || '').trim().toLowerCase();
+    const admin = getAdmin();
+
+    if (normalizedEmail === String(admin.user || '').trim().toLowerCase()) {
+        if (String(password) !== String(admin.pass)) {
+            return { ok: false, message: 'Correo o contraseña incorrectos' };
+        }
+
+        const adminUser = {
+            id: 'admin_001',
+            nombre: 'Administrador',
+            email: admin.user,
+            role: 'admin',
+            tipo: 'admin',
+            status: 'activo',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastActivityAt: new Date().toISOString(),
+            pais: 'Honduras'
+        };
+
+        return {
+            ok: true,
+            token: createJwt(adminUser),
+            user: buildSafeUser(adminUser)
+        };
+    }
+
     const user = users.find(u => (u.email || '').trim().toLowerCase() === normalizedEmail);
 
     if (!user) return { ok: false, message: 'Correo o contraseña incorrectos' };
@@ -183,6 +422,10 @@ async function loginUserByCredentials(email, password) {
     if ((user.status || 'activo') !== 'activo') {
         return { ok: false, message: 'Tu cuenta aún no ha sido verificada.' };
     }
+
+    user.lastActivityAt = new Date().toISOString();
+    user.updatedAt = new Date().toISOString();
+    saveUsers(users);
 
     const token = createJwt(user);
     return {
@@ -629,21 +872,136 @@ app.get('/api/tecnicos/buscar', (req, res) => {
 
 // ---------- ADMIN ENDPOINTS ----------
 app.post('/api/admin/login', (req, res) => {
-    const { user, pass } = req.body;
+    const { user, email, pass } = req.body;
     const admin = getAdmin();
-    if (user === admin.user && pass === admin.pass) {
-        res.json({ ok: true, token: 'admintoken2026' });
-    } else {
-        res.status(401).json({ ok: false, message: 'Credenciales incorrectas' });
+    const username = String(user || email || '').trim();
+
+    if ((username === admin.user || username === admin.email) && pass === admin.pass) {
+        const adminUser = {
+            id: 'admin_001',
+            nombre: 'Administrador',
+            email: admin.user,
+            role: 'admin',
+            tipo: 'admin',
+            status: 'activo',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastActivityAt: new Date().toISOString(),
+            pais: 'Honduras'
+        };
+        const token = createJwt(adminUser);
+        return res.json({ ok: true, token, user: buildSafeUser(adminUser) });
     }
+
+    return res.status(401).json({ ok: false, message: 'Credenciales incorrectas' });
 });
 
 app.get('/api/admin/users', (req, res) => {
-    res.json(getUsers().map(buildSafeUser));
+    const query = String(req.query.q || '').trim().toLowerCase();
+    const role = String(req.query.role || '').trim().toLowerCase();
+    let users = getUsers().map(serializeUserForAdmin);
+
+    if (query) {
+        users = users.filter(user => {
+            const hayTexto = [user.nombre, user.email, user.pais, user.role, user.status].join(' ').toLowerCase();
+            return hayTexto.includes(query);
+        });
+    }
+
+    if (role) {
+        users = users.filter(user => (user.role || '').toLowerCase() === role);
+    }
+
+    users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json(users);
 });
 
 app.get('/api/admin/tecnicos', (req, res) => {
-    res.json(getUsers().filter(u => normalizeRole(u.role || u.tipo) === 'tecnico').map(buildSafeUser));
+    res.json(getUsers().filter(u => normalizeRole(u.role || u.tipo) === 'tecnico').map(serializeUserForAdmin));
+});
+
+app.get('/api/admin/users/:id', (req, res) => {
+    const user = getUsers().find(u => u.id === req.params.id);
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+    res.json(serializeUserForAdmin(user));
+});
+
+app.put('/api/admin/users/:id/role', (req, res) => {
+    const users = getUsers();
+    const idx = users.findIndex(u => u.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+    const nextRole = normalizeRole(req.body?.role || 'cliente');
+    users[idx].role = nextRole;
+    users[idx].tipo = nextRole;
+    users[idx].updatedAt = new Date().toISOString();
+    users[idx].lastActivityAt = new Date().toISOString();
+    saveUsers(users);
+
+    res.json({
+        message: 'Rol actualizado correctamente',
+        user: serializeUserForAdmin(users[idx])
+    });
+});
+
+app.get('/api/admin/dashboard', (req, res) => {
+    const users = getUsers();
+    const requests = getRequests();
+    const clientUsers = users.filter(u => normalizeUserRole(u) === 'cliente');
+    const techUsers = users.filter(u => normalizeUserRole(u) === 'tecnico');
+    const adminUsers = users.filter(u => normalizeUserRole(u) === 'admin');
+
+    const porEstado = {
+        pendiente: 0,
+        cotizado: 0,
+        aceptado: 0,
+        'en progreso': 0,
+        completado: 0,
+        cancelado: 0
+    };
+
+    requests.forEach(req => {
+        const estado = (req.estado || 'pendiente').toLowerCase();
+        if (porEstado[estado] !== undefined) porEstado[estado] += 1;
+    });
+
+    const userTrend = [
+        { label: 'Ene', value: 4 },
+        { label: 'Feb', value: 8 },
+        { label: 'Mar', value: 11 },
+        { label: 'Abr', value: 16 },
+        { label: 'May', value: 18 },
+        { label: 'Jun', value: 21 }
+    ];
+
+    const tecnicoRanking = techUsers
+        .map(user => ({
+            nombre: user.nombre || 'Técnico',
+            calificacion: Number(user.rating || 4.7 + ((user.id.length % 3) * 0.1)),
+            actividades: Number(user.totalServicios || 8 + (user.id.length % 7)),
+            pais: user.pais || 'Honduras'
+        }))
+        .sort((a, b) => b.calificacion - a.calificacion)
+        .slice(0, 5);
+
+    const stats = {
+        totalUsuarios: users.length,
+        totalClientes: clientUsers.length,
+        totalTecnicos: techUsers.length,
+        totalAdmins: adminUsers.length,
+        porTipo: {
+            clientes: clientUsers.length,
+            tecnicos: techUsers.length,
+            admins: adminUsers.length
+        },
+        porEstado,
+        userTrend,
+        tecnicosTop: tecnicoRanking,
+        usuarios: users.map(serializeUserForAdmin),
+        solicitudes: requests
+    };
+
+    res.json(stats);
 });
 
 app.get('/api/admin/stats', (req, res) => {
@@ -654,11 +1012,13 @@ app.get('/api/admin/stats', (req, res) => {
         totalUsuarios: users.length,
         totalClientes: users.filter(u => normalizeRole(u.role || u.tipo) === 'cliente').length,
         totalTecnicos: users.filter(u => normalizeRole(u.role || u.tipo) === 'tecnico').length,
+        totalAdmins: users.filter(u => normalizeRole(u.role || u.tipo) === 'admin').length,
         paises: Object.keys(porPais).length,
         porPais,
         porTipo: {
             clientes: users.filter(u => normalizeRole(u.role || u.tipo) === 'cliente').length,
-            tecnicos: users.filter(u => normalizeRole(u.role || u.tipo) === 'tecnico').length
+            tecnicos: users.filter(u => normalizeRole(u.role || u.tipo) === 'tecnico').length,
+            admins: users.filter(u => normalizeRole(u.role || u.tipo) === 'admin').length
         }
     });
 });
@@ -695,8 +1055,9 @@ app.put('/api/admin/users/:id', (req, res) => {
     }
     if (status) users[idx].status = status;
     users[idx].updatedAt = new Date().toISOString();
+    users[idx].lastActivityAt = new Date().toISOString();
     saveUsers(users);
-    res.json({ message: 'Usuario actualizado', user: buildSafeUser(users[idx]) });
+    res.json({ message: 'Usuario actualizado', user: serializeUserForAdmin(users[idx]) });
 });
 
 app.post('/api/admin/password', (req, res) => {
@@ -711,12 +1072,13 @@ app.post('/api/admin/password', (req, res) => {
 });
 
 app.get('/api/db', (req, res) => {
-    res.sendFile(DB_FILE);
+    res.sendFile(LEGACY_JSON_PATH);
 });
 
 app.listen(PORT, () => {
     console.log('🚀 Servidor en http://localhost:' + PORT);
-    console.log('📂 Base de datos: ' + DB_FILE);
+    console.log('📂 Base de datos SQLite activa: ' + SQLITE_PATH);
+    console.log('📁 Archivo JSON legacy: ' + LEGACY_JSON_PATH + ' (respaldo histórico)');
     console.log('📷 Uploads: ' + UPLOADS_DIR);
     console.log('🔐 Panel admin: http://localhost:' + PORT + '/admin.html');
     console.log('📧 SMTP configurado:', Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS));

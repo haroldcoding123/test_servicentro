@@ -67,7 +67,8 @@ onBeforeUnmount(() => {
 
 function goToProfile() {
   if (!session.value.user) return
-  router.push(getProfileRoute(currentRole.value))
+  const role = (session.value.user?.role || session.value.user?.tipo || 'cliente').toLowerCase()
+  router.push(role === 'admin' ? '/admin' : getProfileRoute(currentRole.value))
 }
 
 function logout() {

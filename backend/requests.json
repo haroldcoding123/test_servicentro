@@ -1,0 +1,44 @@
+[
+  {
+    "id": "req_1001",
+    "cliente": "Juan Pérez",
+    "tecnico": "Luis Plomería Pro",
+    "estado": "pendiente",
+    "fecha": "2026-09-14T10:00:00.000Z"
+  },
+  {
+    "id": "req_1002",
+    "cliente": "Ana Flores",
+    "tecnico": "Maria Elena",
+    "estado": "cotizado",
+    "fecha": "2026-09-15T08:30:00.000Z"
+  },
+  {
+    "id": "req_1003",
+    "cliente": "Carlos Ortiz",
+    "tecnico": "David Zavala",
+    "estado": "aceptado",
+    "fecha": "2026-09-16T12:45:00.000Z"
+  },
+  {
+    "id": "req_1004",
+    "cliente": "Pablo Gómez",
+    "tecnico": "Luis Plomería Pro",
+    "estado": "en progreso",
+    "fecha": "2026-09-18T14:10:00.000Z"
+  },
+  {
+    "id": "req_1005",
+    "cliente": "Sofia Torres",
+    "tecnico": "René Carpintero",
+    "estado": "completado",
+    "fecha": "2026-09-19T09:00:00.000Z"
+  },
+  {
+    "id": "req_1006",
+    "cliente": "Marta Cruz",
+    "tecnico": "Javier Electricista",
+    "estado": "cancelado",
+    "fecha": "2026-09-20T16:20:00.000Z"
+  }
+]

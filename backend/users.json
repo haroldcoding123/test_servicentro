@@ -70,7 +70,7 @@
     "status": "activo",
     "emailVerifiedAt": "2026-09-09T16:10:50.226Z",
     "createdAt": "2026-09-09T16:10:49.004Z",
-    "updatedAt": "2026-09-09T17:42:20.794Z",
+    "updatedAt": "2026-09-09T22:17:09.173Z",
     "descripcion": "",
     "direccion": "",
     "horario": "",
@@ -78,7 +78,13 @@
     "foto": "",
     "trabajos": [],
     "favoritos": [],
-    "verification": null
+    "verification": null,
+    "habilidades": [
+      "Cerrajería",
+      "Plomería",
+      "Soldadura",
+      "Albañilería"
+    ]
   },
   {
     "id": "tech_demo_001",
@@ -106,6 +112,29 @@
       "Fugas",
       "Instalación de grifos"
     ],
+    "verification": null
+  },
+  {
+    "id": "admin_001",
+    "nombre": "Administrador",
+    "email": "admin@nexumservice.com",
+    "passwordHash": "$2b$10$7wC8NxPZWE3pfg4kM6nM5.XYQbDIHcRwjLMVfBXwYwsACeZXZCH2K",
+    "telefono": "+504 0000-0000",
+    "pais": "Honduras",
+    "role": "admin",
+    "tipo": "admin",
+    "status": "activo",
+    "emailVerifiedAt": "2026-09-21T20:18:49.088Z",
+    "createdAt": "2026-09-21T20:18:49.088Z",
+    "updatedAt": "2026-09-21T20:18:49.088Z",
+    "descripcion": "Super administrador del sistema",
+    "direccion": "Nexumservice",
+    "horario": "24/7",
+    "precio": "",
+    "foto": "",
+    "trabajos": [],
+    "favoritos": [],
+    "habilidades": [],
     "verification": null
   }
 ]

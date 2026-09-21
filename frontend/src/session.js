@@ -23,5 +23,7 @@ export function clearSession() {
 
 export function getProfileRoute(role) {
   const normalized = (role || 'cliente').toLowerCase()
-  return normalized === 'tecnico' ? '/perfil-tecnico' : '/perfil-cliente'
+  if (normalized === 'admin') return '/admin'
+  if (normalized === 'tecnico') return '/perfil-tecnico'
+  return '/perfil-cliente'
 }

@@ -49,6 +49,10 @@ async function login() {
     window.dispatchEvent(new CustomEvent('auth:success', { detail: { message: 'Ingreso exitoso' } }))
     window.dispatchEvent(new CustomEvent('auth:close'))
     const role = (user.role || user.tipo || 'cliente').toLowerCase()
+    if (role === 'admin') {
+      router.push('/admin')
+      return
+    }
     router.push(role === 'tecnico' ? '/perfil-tecnico' : '/perfil-cliente')
   } catch (error) {
     errorMessage.value = error.message || 'No se pudo iniciar sesión.'
