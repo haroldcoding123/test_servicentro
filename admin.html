@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - ServiLocal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body class="bg-gray-950 font-sans text-gray-100 min-h-screen">
+
+    <!-- LOGIN -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-8">
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-2">🔐</div>
+                <h2 class="text-2xl font-bold text-white">Panel Admin</h2>
+                <p class="text-gray-400 text-sm">ServiLocal</p>
+            </div>
+            <form id="adminLoginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Usuario</label>
+                    <input type="text" id="adminUser" value="admin" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
+                    <input type="password" id="adminPass" value="admin123" class="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-900 transition">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">Entrar</button>
+            </form>
+            <p id="loginError" class="text-red-400 text-sm text-center mt-3 hidden">Credenciales incorrectas</p>
+            <p class="text-gray-500 text-xs text-center mt-4">Usuario: admin | Pass: admin123</p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD (oculto hasta login) -->
+    <div id="dashboard" class="hidden">
+        <!-- Navbar -->
+        <nav class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🔐</span>
+                <h1 class="text-xl font-bold text-blue-400">Admin - ServiLocal</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="exportCSV()" class="text-gray-300 hover:text-white text-sm flex items-center gap-1 transition">
+                    <span>📤</span> Exportar CSV
+                </button>
+                <button onclick="openPasswordModal()" class="text-gray-300 hover:text-white text-sm flex items-center gap-1 transition">
+                    <span>⚙️</span> Contraseña
+                </button>
+                <button onclick="loadData()" class="text-gray-300 hover:text-white text-sm flex items-center gap-1 transition">
+                    <span>🔄</span> Actualizar
+                </button>
+                <button onclick="logout()" class="text-red-400 hover:text-red-300 text-sm font-medium transition">Salir</button>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+            <!-- Estadísticas -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-1">👥</div>
+                    <div class="text-3xl font-bold text-white" id="statTotal">0</div>
+                    <div class="text-gray-400 text-sm">Total Usuarios</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-1">🔍</div>
+                    <div class="text-3xl font-bold text-blue-400" id="statClientes">0</div>
+                    <div class="text-gray-400 text-sm">Clientes</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-1">🛠️</div>
+                    <div class="text-3xl font-bold text-green-400" id="statTecnicos">0</div>
+                    <div class="text-gray-400 text-sm">Técnicos</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-1">🌎</div>
+                    <div class="text-3xl font-bold text-purple-400" id="statPaises">0</div>
+                    <div class="text-gray-400 text-sm">Países</div>
+                </div>
+            </div>
+
+            <!-- Gráficas -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <h3 class="text-sm font-bold text-gray-300 mb-3">Clientes vs Técnicos</h3>
+                    <canvas id="chartTipos" height="180"></canvas>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <h3 class="text-sm font-bold text-gray-300 mb-3">Usuarios por País</h3>
+                    <canvas id="chartPaises" height="180"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex gap-2 border-b border-gray-800">
+                <button onclick="showTab('tabUsuarios')" id="btnUsuarios" class="px-4 py-2 text-sm font-medium text-blue-400 border-b-2 border-blue-500 transition">Todos los Usuarios</button>
+                <button onclick="showTab('tabTecnicos')" id="btnTecnicos" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition">Técnicos</button>
+            </div>
+
+            <!-- Tab: Todos los usuarios -->
+            <div id="tabUsuarios" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-white">Usuarios Registrados</h3>
+                    <div class="flex gap-2">
+                        <select id="filterPaisUsuarios" onchange="applyFilters('usersTable')" class="px-3 py-2 bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">Todos los países</option>
+                        </select>
+                        <input type="text" id="searchUsers" placeholder="Buscar..." oninput="applyFilters('usersTable')" class="px-3 py-2 bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:outline-none focus:border-blue-500 w-64">
+                    </div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-800 text-gray-300">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-medium">Nombre</th>
+                                    <th class="px-4 py-3 text-left font-medium">Email</th>
+                                    <th class="px-4 py-3 text-left font-medium">Teléfono</th>
+                                    <th class="px-4 py-3 text-left font-medium">País</th>
+                                    <th class="px-4 py-3 text-left font-medium">Tipo</th>
+                                    <th class="px-4 py-3 text-left font-medium">Registro</th>
+                                    <th class="px-4 py-3 text-center font-medium">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable" class="divide-y divide-gray-800">
+                                <!-- Se llena por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Técnicos -->
+            <div id="tabTecnicos" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-white">Técnicos Registrados</h3>
+                    <div class="flex gap-2">
+                        <select id="filterPaisTecnicos" onchange="applyFilters('tecnicosTable')" class="px-3 py-2 bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">Todos los países</option>
+                        </select>
+                        <input type="text" id="searchTecnicos" placeholder="Buscar..." oninput="applyFilters('tecnicosTable')" class="px-3 py-2 bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:outline-none focus:border-blue-500 w-64">
+                    </div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-800 text-gray-300">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-medium">Nombre</th>
+                                    <th class="px-4 py-3 text-left font-medium">Email</th>
+                                    <th class="px-4 py-3 text-left font-medium">Teléfono</th>
+                                    <th class="px-4 py-3 text-left font-medium">País</th>
+                                    <th class="px-4 py-3 text-left font-medium">Registro</th>
+                                    <th class="px-4 py-3 text-center font-medium">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tecnicosTable" class="divide-y divide-gray-800">
+                                <!-- Se llena por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Editar Usuario</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="editForm" class="space-y-3">
+                <input type="hidden" id="editId">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Nombre</label>
+                    <input type="text" id="editNombre" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Email</label>
+                    <input type="email" id="editEmail" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Teléfono</label>
+                    <input type="text" id="editTelefono" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">País</label>
+                    <select id="editPais" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                        <option value="ar">🇦🇷 Argentina</option>
+                        <option value="bo">🇧🇴 Bolivia</option>
+                        <option value="br">🇧🇷 Brasil</option>
+                        <option value="cl">🇨🇱 Chile</option>
+                        <option value="co">🇨🇴 Colombia</option>
+                        <option value="cr">🇨🇷 Costa Rica</option>
+                        <option value="cu">🇨🇺 Cuba</option>
+                        <option value="ec">🇪🇨 Ecuador</option>
+                        <option value="sv">🇸🇻 El Salvador</option>
+                        <option value="gt">🇬🇹 Guatemala</option>
+                        <option value="hn">🇭🇳 Honduras</option>
+                        <option value="mx">🇲🇽 México</option>
+                        <option value="ni">🇳🇮 Nicaragua</option>
+                        <option value="pa">🇵🇦 Panamá</option>
+                        <option value="py">🇵🇾 Paraguay</option>
+                        <option value="pe">🇵🇪 Perú</option>
+                        <option value="do">🇩🇴 República Dominicana</option>
+                        <option value="uy">🇺🇾 Uruguay</option>
+                        <option value="ve">🇻🇪 Venezuela</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Tipo</label>
+                    <select id="editTipo" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                        <option value="cliente">Cliente</option>
+                        <option value="proveedor">Técnico / Proveedor</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 border border-gray-700 text-gray-300 py-2 rounded-lg hover:bg-gray-800 transition text-sm">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition text-sm font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Contraseña -->
+    <div id="passwordModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Cambiar Contraseña Admin</h3>
+                <button onclick="closePasswordModal()" class="text-gray-500 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="passwordForm" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Usuario (opcional)</label>
+                    <input type="text" id="newAdminUser" placeholder="admin" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Contraseña actual</label>
+                    <input type="password" id="currentAdminPass" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Nueva contraseña</label>
+                    <input type="password" id="newAdminPass" required minlength="4" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <p id="passwordError" class="text-red-400 text-sm hidden"></p>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closePasswordModal()" class="flex-1 border border-gray-700 text-gray-300 py-2 rounded-lg hover:bg-gray-800 transition text-sm">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition text-sm font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Info de Login -->
+    <div id="infoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Datos usados para iniciar sesión</h3>
+                <button onclick="closeInfoModal()" class="text-gray-500 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <div class="text-xs font-medium text-gray-400 mb-1">Correo</div>
+                    <div id="infoEmail" class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white break-all"></div>
+                </div>
+                <div>
+                    <div class="text-xs font-medium text-gray-400 mb-1">Contraseña</div>
+                    <div class="flex gap-2">
+                        <div id="infoPass" class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white break-all"></div>
+                        <button onclick="toggleInfoPass()" id="toggleInfoPassBtn" class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 hover:text-white text-sm">👁️</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4">
+                <button type="button" onclick="closeInfoModal()" class="w-full border border-gray-700 text-gray-300 py-2 rounded-lg hover:bg-gray-800 transition text-sm">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-[200] px-6 py-3 rounded-lg shadow-lg font-medium"></div>
+
+    <script>
+        const API = 'http://localhost:3000/api/admin';
+        let currentTab = 'tabUsuarios';
+
+        // Login
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+            try {
+                const r = await fetch(`${API}/login`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ user, pass })
+                });
+                const j = await r.json();
+                if (j.ok) {
+                    localStorage.setItem('adminToken', j.token);
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    loadData();
+                } else {
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch {
+                document.getElementById('loginError').textContent = 'No se pudo conectar al servidor';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            location.reload();
+        }
+
+        function showToast(msg, ok=true) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `fixed bottom-6 right-6 transform transition-all duration-300 z-[200] px-6 py-3 rounded-lg shadow-lg font-medium ${ok?'bg-green-600 text-white':'bg-red-600 text-white'}`;
+            t.classList.remove('translate-y-20','opacity-0');
+            setTimeout(()=>t.classList.add('translate-y-20','opacity-0'),3000);
+        }
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabUsuarios').classList.add('hidden');
+            document.getElementById('tabTecnicos').classList.add('hidden');
+            document.getElementById(tab).classList.remove('hidden');
+            document.getElementById('btnUsuarios').className = tab==='tabUsuarios' ? 'px-4 py-2 text-sm font-medium text-blue-400 border-b-2 border-blue-500 transition' : 'px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition';
+            document.getElementById('btnTecnicos').className = tab==='tabTecnicos' ? 'px-4 py-2 text-sm font-medium text-blue-400 border-b-2 border-blue-500 transition' : 'px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 transition';
+        }
+
+        let allUsersData = [];
+        let allTecnicosData = [];
+        let chartTipos = null;
+        let chartPaises = null;
+
+        async function loadData() {
+            try {
+                // Stats
+                const s = await (await fetch(`${API}/stats`)).json();
+                document.getElementById('statTotal').textContent = s.totalUsuarios;
+                document.getElementById('statClientes').textContent = s.totalClientes;
+                document.getElementById('statTecnicos').textContent = s.totalTecnicos;
+                document.getElementById('statPaises').textContent = s.paises;
+
+                // Usuarios
+                const users = await (await fetch(`${API}/users`)).json();
+                allUsersData = users;
+                renderTable('usersTable', users, true);
+                populatePaisFilter('filterPaisUsuarios', users);
+
+                // Técnicos
+                const tecnicos = await (await fetch(`${API}/tecnicos`)).json();
+                allTecnicosData = tecnicos;
+                renderTable('tecnicosTable', tecnicos, false);
+                populatePaisFilter('filterPaisTecnicos', tecnicos);
+
+                renderCharts(users, s);
+            } catch {
+                showToast('Error al cargar datos', false);
+            }
+        }
+
+        function populatePaisFilter(selectId, data) {
+            const select = document.getElementById(selectId);
+            const current = select.value;
+            const uniquePaises = [...new Set(data.map(u => u.pais))].sort();
+            select.innerHTML = '<option value="">Todos los países</option>' +
+                uniquePaises.map(p => `<option value="${p}">${paises[p] || p}</option>`).join('');
+            select.value = current;
+        }
+
+        function renderCharts(users, stats) {
+            const ctxTipos = document.getElementById('chartTipos');
+            const ctxPaises = document.getElementById('chartPaises');
+
+            if (chartTipos) chartTipos.destroy();
+            chartTipos = new Chart(ctxTipos, {
+                type: 'bar',
+                data: {
+                    labels: ['Clientes', 'Técnicos'],
+                    datasets: [{
+                        data: [stats.totalClientes, stats.totalTecnicos],
+                        backgroundColor: ['#3b82f6', '#22c55e']
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            const conteoPaises = {};
+            users.forEach(u => { conteoPaises[u.pais] = (conteoPaises[u.pais]||0) + 1; });
+            const labelsPaises = Object.keys(conteoPaises).map(p => paises[p] || p);
+            const dataPaises = Object.values(conteoPaises);
+            const colores = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#eab308','#06b6d4','#ec4899','#84cc16','#6366f1'];
+
+            if (chartPaises) chartPaises.destroy();
+            chartPaises = new Chart(ctxPaises, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsPaises,
+                    datasets: [{ data: dataPaises, backgroundColor: colores }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', boxWidth: 12 } } }
+                }
+            });
+        }
+
+        const paises = {ar:'Argentina',bo:'Bolivia',br:'Brasil',cl:'Chile',co:'Colombia',cr:'Costa Rica',cu:'Cuba',ec:'Ecuador',sv:'El Salvador',gt:'Guatemala',hn:'Honduras',mx:'México',ni:'Nicaragua',pa:'Panamá',py:'Paraguay',pe:'Perú',do:'Rep. Dominicana',uy:'Uruguay',ve:'Venezuela'};
+
+        function renderTable(tbodyId, data, showTipo) {
+            const tbody = document.getElementById(tbodyId);
+            if (!data.length) {
+                tbody.innerHTML = `<tr><td colspan="${showTipo?7:6}" class="px-4 py-8 text-center text-gray-500">No hay registros</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = data.map(u => {
+                const fecha = new Date(u.fechaRegistro).toLocaleString('es-ES');
+                const tipoBadge = u.tipo==='proveedor'
+                    ? '<span class="px-2 py-1 bg-green-900/50 text-green-400 rounded text-xs font-medium">Técnico</span>'
+                    : '<span class="px-2 py-1 bg-blue-900/50 text-blue-400 rounded text-xs font-medium">Cliente</span>';
+                return `<tr class="hover:bg-gray-800/50 transition" data-pais="${u.pais}">
+                    <td class="px-4 py-3 text-white font-medium">${u.nombre}</td>
+                    <td class="px-4 py-3 text-gray-300">${u.email}</td>
+                    <td class="px-4 py-3 text-gray-300">${u.telefono||'-'}</td>
+                    <td class="px-4 py-3 text-gray-300">${paises[u.pais]||u.pais}</td>
+                    ${showTipo?`<td class="px-4 py-3">${tipoBadge}</td>`:''}
+                    <td class="px-4 py-3 text-gray-400 text-xs">${fecha}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick='openInfo(${JSON.stringify(u).replace(/'/g,"&#39;")})' class="text-gray-400 hover:text-gray-200 text-sm mr-2 transition" title="Ver datos de login">ℹ️</button>
+                        <button onclick='openEdit(${JSON.stringify(u).replace(/'/g,"&#39;")})' class="text-blue-400 hover:text-blue-300 text-sm mr-2 transition" title="Editar">✏️</button>
+                        <button onclick="deleteUser('${u.id}')" class="text-red-400 hover:text-red-300 text-sm transition" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function applyFilters(tbodyId) {
+            const isUsers = tbodyId === 'usersTable';
+            const searchId = isUsers ? 'searchUsers' : 'searchTecnicos';
+            const paisId = isUsers ? 'filterPaisUsuarios' : 'filterPaisTecnicos';
+            const q = document.getElementById(searchId).value.toLowerCase();
+            const paisFiltro = document.getElementById(paisId).value;
+
+            const rows = document.getElementById(tbodyId).querySelectorAll('tr');
+            rows.forEach(row => {
+                const matchTexto = row.textContent.toLowerCase().includes(q);
+                const matchPais = !paisFiltro || row.dataset.pais === paisFiltro;
+                row.style.display = (matchTexto && matchPais) ? '' : 'none';
+            });
+        }
+
+        function exportCSV() {
+            const data = currentTab === 'tabTecnicos' ? allTecnicosData : allUsersData;
+            if (!data.length) { showToast('No hay datos para exportar', false); return; }
+
+            const headers = ['Nombre','Email','Teléfono','País','Tipo','Fecha de Registro'];
+            const filas = data.map(u => [
+                u.nombre, u.email, u.telefono||'', paises[u.pais]||u.pais,
+                u.tipo==='proveedor' ? 'Técnico' : 'Cliente',
+                new Date(u.fechaRegistro).toLocaleString('es-ES')
+            ]);
+            const escape = v => `"${String(v).replace(/"/g,'""')}"`;
+            const csv = [headers, ...filas].map(fila => fila.map(escape).join(',')).join('\r\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `usuarios_${currentTab==='tabTecnicos'?'tecnicos':'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('CSV exportado');
+        }
+
+        function openPasswordModal() {
+            document.getElementById('passwordForm').reset();
+            document.getElementById('passwordError').classList.add('hidden');
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('passwordModal').classList.add('flex');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            document.getElementById('passwordModal').classList.remove('flex');
+        }
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPass = document.getElementById('currentAdminPass').value;
+            const newPass = document.getElementById('newAdminPass').value;
+            const newUser = document.getElementById('newAdminUser').value.trim();
+            const errEl = document.getElementById('passwordError');
+            try {
+                const r = await fetch(`${API}/password`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ currentPass, newPass, newUser: newUser || undefined })
+                });
+                const j = await r.json();
+                if (r.ok && j.ok) {
+                    showToast('Contraseña actualizada');
+                    closePasswordModal();
+                } else {
+                    errEl.textContent = j.message || 'Error al cambiar la contraseña';
+                    errEl.classList.remove('hidden');
+                }
+            } catch {
+                errEl.textContent = 'Error de conexión';
+                errEl.classList.remove('hidden');
+            }
+        });
+
+        let infoPassVisible = false;
+        function openInfo(user) {
+            document.getElementById('infoEmail').textContent = user.email;
+            const el = document.getElementById('infoPass');
+            el.dataset.real = user.password || '(no disponible)';
+            infoPassVisible = false;
+            maskInfoPass();
+            document.getElementById('infoModal').classList.remove('hidden');
+            document.getElementById('infoModal').classList.add('flex');
+        }
+
+        function maskInfoPass() {
+            const el = document.getElementById('infoPass');
+            const real = el.dataset.real;
+            el.textContent = infoPassVisible ? real : '•'.repeat(Math.max(real.length, 8));
+            document.getElementById('toggleInfoPassBtn').textContent = infoPassVisible ? '🙈' : '👁️';
+        }
+
+        function toggleInfoPass() {
+            infoPassVisible = !infoPassVisible;
+            maskInfoPass();
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+            document.getElementById('infoModal').classList.remove('flex');
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('¿Eliminar este usuario permanentemente?')) return;
+            try {
+                const r = await fetch(`${API}/users/${id}`, { method: 'DELETE' });
+                if (r.ok) { showToast('Usuario eliminado'); loadData(); }
+                else showToast('Error al eliminar', false);
+            } catch { showToast('Error de conexión', false); }
+        }
+
+        function openEdit(user) {
+            document.getElementById('editId').value = user.id;
+            document.getElementById('editNombre').value = user.nombre;
+            document.getElementById('editEmail').value = user.email;
+            document.getElementById('editTelefono').value = user.telefono||'';
+            document.getElementById('editPais').value = user.pais;
+            document.getElementById('editTipo').value = user.tipo;
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editModal').classList.add('flex');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const body = {
+                nombre: document.getElementById('editNombre').value,
+                email: document.getElementById('editEmail').value,
+                telefono: document.getElementById('editTelefono').value,
+                pais: document.getElementById('editPais').value,
+                tipo: document.getElementById('editTipo').value
+            };
+            try {
+                const r = await fetch(`${API}/users/${id}`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+                });
+                if (r.ok) { showToast('Usuario actualizado'); closeEditModal(); loadData(); }
+                else showToast('Error al guardar', false);
+            } catch { showToast('Error de conexión', false); }
+        });
+
+        // Auto-login si hay token
+        if (localStorage.getItem('adminToken')) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadData();
+        }
+    </script>
+</body>
+</html>
